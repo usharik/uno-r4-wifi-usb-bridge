@@ -28,6 +28,7 @@
 #endif
 
 static void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+void tankRequestDefaults();
 
 
 static uint32_t _baud = 0;
@@ -224,6 +225,7 @@ void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, 
       case ARDUINO_USB_CDC_LINE_CODING_EVENT:
         auto baud = data->line_coding.bit_rate;
         if (baud == 1200) {
+          tankRequestDefaults();
           WiFi.disconnect();
           digitalWrite(GPIO_BOOT, HIGH);
           digitalWrite(GPIO_RST, LOW);
@@ -234,6 +236,7 @@ void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, 
           delay(100);
           digitalWrite(GPIO_RST, HIGH);
         } else if (baud == 2400) {
+          tankRequestDefaults();
           WiFi.disconnect();
           digitalWrite(GPIO_BOOT, LOW);
           digitalWrite(GPIO_RST, HIGH);

@@ -2,6 +2,7 @@
 
 #include "at_handler.h"
 #include "commands.h"
+#include "cmds_tank.h"
 #include "cmds_esp_generic.h"
 
 
@@ -83,6 +84,7 @@ void CAtHandler::run() {
     }
   }
 
+  TankLink::afterRun(serial);
   vTaskDelay(1);
 }
 
@@ -129,6 +131,7 @@ CAtHandler::CAtHandler(HardwareSerial *s) : last_server_client_sock(0) {
   });
 
   at_srv.set_command_callback([this](chAT::Server & srv, const std::string & command) {
+    TankLink::noteCommand();
     auto it = command_table.find(command);
 
     if (it == command_table.end()) {
@@ -150,4 +153,10 @@ CAtHandler::CAtHandler(HardwareSerial *s) : last_server_client_sock(0) {
   add_cmds_ota();
   add_cmds_preferences();
   add_cmds_se();
+  add_cmds_tank();   // last: it wraps AT+SOFTRESETWIFI
+}
+
+/* For the USB event task (1200/2400 baud touch): stock AT behaviour and 115200 again. */
+void tankRequestDefaults() {
+  TankLink::requestDefaults();
 }

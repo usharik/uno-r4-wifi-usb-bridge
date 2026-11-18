@@ -15,6 +15,7 @@ void CAtHandler::add_cmds_ble_bridge() {
       srv.write_response_prompt();
       switch (parser.cmd_mode) {
          case chAT::CommandMode::Run: {
+               WiFi.setSleep(true);   /* tank link mode turns it off; Wi-Fi/BLE coexistence needs it */
                auto res = HCIVirtualTransport.begin();
                if (res) {
                   return chAT::CommandStatus::OK;

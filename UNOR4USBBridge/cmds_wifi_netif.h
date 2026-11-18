@@ -313,12 +313,23 @@ void CAtHandler::add_cmds_wifi_netif() {
             if(offset < data_size) {
 
                data_received.resize(data_size);
+               /* tank: a sketch that resets in the middle of a send must not hang the AT task */
+               unsigned long read_start = millis();
                do {
                   offset += serial->read(data_received.data() + offset, data_size - offset);
+                  if (offset < data_size && millis() - read_start > 1000) {
+                     srv.continue_read();
+                     return chAT::CommandStatus::ERROR;
+                  }
                } while (offset < data_size);
             }
 
             srv.continue_read();
+
+            if (TankLink::enabled) {
+               return TankLink::send(the_client.client, data_received.data(), data_received.size())
+                  ? chAT::CommandStatus::OK : chAT::CommandStatus::ERROR;
+            }
 
             int sent = 0;
             sent += the_client.client->write(data_received.data() + sent, data_received.size() - sent);
@@ -353,6 +364,7 @@ void CAtHandler::add_cmds_wifi_netif() {
             if (the_client.client == nullptr) {
             }
             else {
+               TankLink::flushBeforeClose(the_client.client->fd());
                the_client.client->stop();
                
 
@@ -503,6 +515,7 @@ void CAtHandler::add_cmds_wifi_netif() {
                         return chAT::CommandStatus::ERROR;
                      }
                      servers_num++;
+                     serverWiFi[i]->setNoDelay(TankLink::enabled);
                      serverWiFi[i]->begin(port);
                      srv.write_response_prompt();
                      srv.write_str((const char *) String(i).c_str());
@@ -550,6 +563,7 @@ void CAtHandler::add_cmds_wifi_netif() {
                   serverClients[i].client = serverWiFi[sock]->available();
                   if(!serverClients[i].client)
                      break;
+                  TankLink::tuneAcceptedSocket(serverClients[i].client.fd());
                   serverClients[i].server = sock;
                   serverClients[i].accepted = false;
                }
@@ -624,6 +638,7 @@ void CAtHandler::add_cmds_wifi_netif() {
                if(!serverClients[i].client) {
                   serverClients[i].client = serverWiFi[sock]->available();
                   if (serverClients[i].client) {
+                    TankLink::tuneAcceptedSocket(serverClients[i].client.fd());
                     serverClients[i].server = sock;
                     serverClients[i].accepted = true;
                     client_sock = i;
@@ -761,6 +776,8 @@ void CAtHandler::add_cmds_wifi_netif() {
             data_received.resize(data_wanted);
 
             int res = the_client.client->read(data_received.data(), data_wanted);
+            /* tank: never report bytes that were not read (they were zero padding) */
+            data_received.resize(res > 0 ? res : 0);
             String results = String(data_received.size()) + "|";
             
             srv.write_response_prompt();

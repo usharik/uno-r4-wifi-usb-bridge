@@ -96,6 +96,7 @@ private:
    void add_cmds_ota();
    void add_cmds_preferences();
    void add_cmds_se();
+   void add_cmds_tank();
 public:
    inline void addTask(std::function<void()> task) {
       tasks.push(task);
