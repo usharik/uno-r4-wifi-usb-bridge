@@ -8,6 +8,11 @@
   described in the file header. Stock sketches never send these and see stock behaviour.
 - Other changes: a 1 s timeout on the CLIENTSEND payload read, CLIENTRECEIVE no longer pads short reads,
   modem sleep back on before BLE (HCI begin).
+- The core submodule `hardware/esp32-patched/esp32` points at espressif/arduino-esp32 tag 2.0.17
+  (5e19e08); Arduino's patches for it are in `tank/core-2.0.17-arduino-patches.diff`:
+  `git submodule update --init --recursive`, then
+  `git -C hardware/esp32-patched/esp32 apply ../../../tank/core-2.0.17-arduino-patches.diff`
+  and the core's `tools/get.py` (toolchains) as for the stock build.
 - Build: `sed "s#PWD#$PWD#g" arduino-cli.yaml.orig > arduino-cli.yaml` then line 2 of `compile.sh`.
   Image: the official `UNOR4-WIFI-S3-0.6.1.bin` with only app0 (0x50000) replaced by `UNOR4USBBridge.ino.bin`.
 - Flash: `unor4wifi-reboot-macos`, then `espflash write-bin -p <port> -b 115200 0x0 <image>`, then a full
